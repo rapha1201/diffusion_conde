@@ -9,9 +9,11 @@
 #     sbatch slurm/baseline_pixel.slurm
 # Resubmitting resumes from runs/baseline_pixel/ckpt_latest.pt.
 
+# in_container.sh drops the image's CUDA forward-compat libs, which break CUDA (error 803)
+# on nodes whose driver is newer than the container's CUDA 12.6 (e.g. driver 595 on gpu_batch).
 export PYTHONPATH="$(pwd)${PYTHONPATH:+:$PYTHONPATH}"
 
-srun singularity run --nv \
+srun singularity exec --nv \
     -B/pgeoprj,/tatu \
     /tatu/container_images/go-deep.sif \
-    python train_baseline.py --config configs/sld/baseline_pixel.yaml "$@"
+    bash slurm/in_container.sh python train_baseline.py --config configs/sld/baseline_pixel.yaml "$@"

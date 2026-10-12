@@ -12,7 +12,7 @@ data:
   min_valid_frac_section: 0.25
   buffer_size: 4096
   num_workers: 8
-  batch_size: 32
+  batch_size: 64        # A100 80GB, bf16
   val_max_per_source: 256
   val_batch_size: 64
 

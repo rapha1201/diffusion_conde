@@ -13,7 +13,7 @@ data:
   min_valid_frac_section: 0.25   # drop sections (e.g. Modelo9 empty ones) with fewer valid RGT pixels
   buffer_size: 4096
   num_workers: 8
-  batch_size: 16
+  batch_size: 32        # A100 80GB, bf16
   val_max_per_source: 256
   val_batch_size: 64
 
