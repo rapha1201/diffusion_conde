@@ -7,6 +7,11 @@ right, the isolines follow the reflectors in both seismic columns.
     python tools/preview_pairs.py --h5 /path/to/fault_aware.h5 --models Modelo3 Modelo9 --n 8 --out preview.png
 """
 import argparse
+import os
+import sys
+
+# Allow `python tools/preview_pairs.py` from anywhere: put the repo root on the path.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import matplotlib
 matplotlib.use("Agg")
