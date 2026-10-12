@@ -31,8 +31,13 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)
 
 
-def resolve_device():
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def resolve_device(require_gpu=False):
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if require_gpu:
+        raise SystemExit("CUDA is not available (torch.cuda.is_available() is False). Refusing to train on CPU; "
+                         "run sbatch slurm/gpu_check.slurm to diagnose, or pass --allow-cpu.")
+    return torch.device("cpu")
 
 
 def resolve_precision(name, device):

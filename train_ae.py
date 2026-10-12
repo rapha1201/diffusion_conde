@@ -32,6 +32,7 @@ def parse_args():
     p.add_argument("--out-dir", default=None, help="override out_dir")
     p.add_argument("--set", nargs="*", default=[], metavar="KEY=VALUE", help="dotted config overrides")
     p.add_argument("--debug", action="store_true", help="tiny model, a few steps, no workers")
+    p.add_argument("--allow-cpu", action="store_true", help="train on CPU if CUDA is unavailable (default: fail)")
     return p.parse_args()
 
 
@@ -58,7 +59,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     save_config(cfg, os.path.join(out_dir, "config.yaml"))
     set_seed(cfg.get("seed", 0))
-    device = resolve_device()
+    device = resolve_device(require_gpu=not (args.debug or args.allow_cpu))
     print(f"device={device} torch={torch.__version__} diffusers={diffusers.__version__} modality={modality}", flush=True)
     if device.type == "cuda":
         print(f"gpu={torch.cuda.get_device_name(device)} bf16={torch.cuda.is_bf16_supported()}", flush=True)
