@@ -1,0 +1,65 @@
+# Seismic autoencoder (KL-VAE, f=8: 128x128 -> 8x16x16). Single GPU: slurm/ae_seismic.slurm
+# Same downsampling factor as the RGT AE so the latents can be concatenated; more latent
+# channels because z_x is a clean condition (never noised) and seismic is broadband.
+experiment: ae_seismic
+modality: seismic
+out_dir: runs/ae_seismic
+seed: 0
+val_key: mae
+
+data:
+  h5_path: /pgeoprj/godeep/ej49/ConDe/dataset/fault_aware.h5
+  split: null
+  include_reflectivity: false
+  clip_percentiles: [0.5, 99.5]
+  min_valid_frac_section: 0.25
+  buffer_size: 4096
+  num_workers: 8
+  batch_size: 16
+  val_max_per_source: 256
+  val_batch_size: 64
+
+transform:
+  output_size: 128
+  min_valid_frac: 0.5
+
+augment:                # appearance augmentations broaden the seismic distribution the encoder sees
+  aug_p: 0.8
+  p_statics: 0.1
+  statics_shift_range: [1.0, 5.0]
+  p_fault: 0.3
+  p_rotation: 0.2
+  rotation_deg_range: [-10.0, 10.0]
+  p_shear: 0.1
+  shear_deg_range: [-8.0, 8.0]
+  p_aniso: 0.2
+  p_zoom: 0.2
+  zoom_range: [0.9, 1.25]
+  p_hflip: 0.5
+
+model:
+  latent_channels: 8
+  block_out_channels: [128, 256, 512, 512]
+  layers_per_block: 2
+  norm_num_groups: 32
+
+loss:
+  l1: 1.0
+  grad: 0.5
+  spectral: 0.1         # L1 on log-amplitude spectra: penalizes lost high frequencies
+  kl: 1.0e-6
+
+optim:
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  warmup_steps: 1000
+  total_steps: 200000
+  min_lr_ratio: 0.05
+  grad_clip: 1.0
+  precision: auto
+
+log_every: 100
+val_every: 2500
+ckpt_every: 5000
+n_vis: 8

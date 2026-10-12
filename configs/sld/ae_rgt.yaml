@@ -1,0 +1,66 @@
+# RGT autoencoder (KL-VAE, f=8: 128x128 -> 4x16x16). Single GPU: slurm/ae_rgt.slurm
+experiment: ae_rgt
+modality: rgt
+out_dir: runs/ae_rgt
+seed: 0
+val_key: mae            # lower is better; hde_px is also logged
+
+data:
+  h5_path: /pgeoprj/godeep/ej49/ConDe/dataset/fault_aware.h5
+  split: null           # null = DEFAULT_SPLIT (train M3,M4,M5,M8,M9 / val M7 / test M2), or a split.json path
+  include_reflectivity: false
+  clip_percentiles: [0.5, 99.5]
+  min_valid_frac_section: 0.25   # drop sections (e.g. Modelo9 empty ones) with fewer valid RGT pixels
+  buffer_size: 4096
+  num_workers: 8
+  batch_size: 16
+  val_max_per_source: 256
+  val_batch_size: 64
+
+transform:
+  output_size: 128
+  min_valid_frac: 0.5   # crops with fewer valid pixels are excluded from the loss
+
+# SeismicAugmentation kwargs (pair path: appearance on seismic only, geometry shared with RGT).
+# Milder geometry than the ConDe runs: rare/small statics (avoids kinked V-bends), +-10 deg rotation.
+augment:
+  aug_p: 0.8
+  p_statics: 0.1
+  statics_shift_range: [1.0, 5.0]
+  p_fault: 0.3
+  p_rotation: 0.2
+  rotation_deg_range: [-10.0, 10.0]
+  p_shear: 0.1
+  shear_deg_range: [-8.0, 8.0]
+  p_aniso: 0.2
+  p_zoom: 0.2
+  zoom_range: [0.9, 1.25]
+  p_hflip: 0.5
+
+model:
+  latent_channels: 4
+  block_out_channels: [128, 256, 512, 512]
+  layers_per_block: 2
+  norm_num_groups: 32
+
+loss:                   # masked by the RGT validity mask
+  l1: 1.0
+  grad: 0.5
+  ssim: 0.2
+  monotonic: 0.0        # only acts where the target increases with depth; off by default
+  kl: 1.0e-6
+
+optim:
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  warmup_steps: 1000
+  total_steps: 200000
+  min_lr_ratio: 0.05
+  grad_clip: 1.0
+  precision: auto       # bf16 if the GPU supports it, else fp32
+
+log_every: 100
+val_every: 2500
+ckpt_every: 5000
+n_vis: 8
