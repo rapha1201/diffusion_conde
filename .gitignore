@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data and model artifacts (data lives on the cluster)
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+/data/
+
+# Run outputs and logs
+runs/
+ae_res/
+conde_res/
+conde_ae/
+*.out
+*.log
+wandb/
+
+# Private: proposal and inspection outputs of partner-provided data
+proposta_poc2.pdf
+h5_summary.json
+pair_check.json

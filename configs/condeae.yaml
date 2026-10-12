@@ -1,0 +1,65 @@
+general:
+    num_epochs: 251
+    validation_interval: 2
+    experiment_name: "condeae17"
+    save_dir: "conde_ae"
+    model: "condeae"
+dataset:
+    h5_path: '/pgeoprj/godeep/ej49/ConDe/dataset/largesetv5.h5'
+dataloader:
+    batch_size: 512 
+    num_workers: 4
+    prefetch_factor: 5
+    pin_memory: true
+    persistent_workers: true
+backbone:
+    name: "EncoderDecoder"
+    args:
+        in_channels: 1
+        out_channels: 1
+        embed_dim: 2048
+        channels_list: [64, 128, 256, 512, 512]
+        res_blocks: [3, 3, 23, 3]
+    functions:
+        activation: 'silu'
+        norm: 'batchnorm2d'
+        encoder_final_activation: 'identity'
+        decoder_final_activation: 'identity'
+
+
+loss:
+    losses:
+        mae:
+            name: "mae"
+            pred: "recon"
+            target: "x"
+            alpha: 1
+        grad:
+            name: "GradientLoss"
+            pred: "recon"
+            target: "x"
+            alpha: 0.1
+        str_loss:
+            name: "TripletLoss"
+            pred: "z_str_s1r1"
+            target: "z_str_s1r2"
+            triple: "z_str_s2r1"
+            alpha: 1
+        res_loss:
+            name: "TripletLoss"
+            pred: "z_res_s1r1"
+            target: "z_res_s2r1"
+            triple: "z_res_s1r2"
+            alpha: 1
+        orthogonality_loss:
+            name: "OrthogonalityLoss"
+            pred: "z_res_s1r1"
+            target: "z_str_s1r1"
+            alpha: 0.01
+model:
+    lr: 0.0001
+    weight_decay: 0
+
+
+    
+    

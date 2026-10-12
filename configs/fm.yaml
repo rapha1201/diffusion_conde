@@ -1,0 +1,57 @@
+general:
+    num_epochs: 501
+    validation_interval: 5
+    experiment_name: "fm1"
+    save_dir: "fm_res"
+    model: "fm"
+dataset:
+    h5_path: '/pgeoprj/godeep/ej49/ConDe/dataset/largesetv3.h5'
+    do_augment: false
+dataloader:
+    batch_size: 512
+    num_workers: 4
+    prefetch_factor: 5
+    pin_memory: true
+    persistent_workers: true
+backbone:
+    name: "EncoderDecoder"
+    args:
+        in_channels: 1
+        out_channels: 1
+        embed_dim: 4096
+        channels_list: [64, 128, 256, 512, 512]
+        res_blocks: [3, 3, 19, 3]
+    functions:
+        activation: 'silu'
+        norm: 'batchnorm2d'
+        encoder_final_activation: 'identity'
+        decoder_final_activation: 'identity'
+
+
+loss:
+    losses:
+        mae:
+            name: "mae"
+            pred: "recon"
+            target: "x"
+            alpha: 1
+        grad:
+            name: "GradientLoss"
+            pred: "recon"
+            target: "x"
+            alpha: 0.1
+        mcl:
+            name: "MCLTripletLoss"   
+            require_step: true
+            pred: "za_heads"
+            target: "zp_heads"
+            triple: "zn_heads"
+            alpha: 1
+model:
+    lr: 0.0001
+    weight_decay: 0
+    num_heads: 64
+
+
+    
+    

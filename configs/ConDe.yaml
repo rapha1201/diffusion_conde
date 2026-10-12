@@ -1,0 +1,85 @@
+general:
+    num_epochs: 1001
+    validation_interval: 25
+    experiment_name: "base_conde13"
+    save_dir: "conde_res"
+dataset:
+    h5_path: '/pgeoprj/godeep/ej49/ConDe/dataset/M3v1.h5'
+    num_rets: 2
+dataloader:
+    batch_size: 256
+
+    
+noise_encoder:
+    name: "Encoder"
+    args:
+        in_channels: 1
+        embed_dim: 1024
+        channels_list: [64, 128, 256, 512, 1024]
+        res_blocks: [3, 3, 7, 3]
+    functions:
+        activation: 'silu'
+        norm: ''
+        final_activation: 'identity'
+
+structure_encoder:
+    name: "Encoder"
+    args:
+        in_channels: 1
+        embed_dim: 1024
+        channels_list: [64, 128, 256, 512, 1024]
+        res_blocks: [3, 3, 7, 3]
+    functions:
+        activation: 'silu'
+        norm: 'instance2d'
+        final_activation: 'identity'
+
+bottleneck:
+    name: "ResidualMLP"
+    args:
+        latent_dim: 2048
+        hidden_dim: 1500
+        emb_size: 2048
+        dropout_p: 0
+        num_residual_layers: 5       
+    functions:
+        activation: 'silu'
+        norm: 'LayerNorm'
+        final_activation: 'identity'
+
+autoencoder:
+    config_path: '/pgeoprj/godeep/ej49/ConDe/configs/base.yaml'
+
+
+loss:
+    losses:
+        str_const:
+            name: "tripletloss"
+            pred: "str_x1"
+            target: "str_x2"
+            triple: "reordered_str_x2"
+            alpha: 1
+            args:
+                margin: 0.4
+                distance: 'cosine'
+        noise_const:
+            name: "tripletloss"
+            pred: "noise_x1"
+            target: "reordered_noise_x2"
+            triple: "noise_x2"
+            alpha: 1
+        kd_loss:
+            name: "mse"
+            pred: "remmaped_emb1"
+            target: "emb1"
+            alpha: 1
+
+model:
+    lr: 0.0001
+    weight_decay: 0
+    stage1_epochs: 250
+    variance_translator: true
+
+
+    
+    
