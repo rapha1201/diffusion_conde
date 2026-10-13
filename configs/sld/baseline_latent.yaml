@@ -1,0 +1,65 @@
+# B2: deterministic latent regressor z_x -> z_y (same UNet family and latent space as the LDM,
+# decoded by the same RGT decoder). Isolates generative vs deterministic at equal AE ceiling.
+# Single GPU: slurm/baseline_latent.slurm
+experiment: baseline_latent
+kind: latent_regressor
+out_dir: runs/baseline_latent
+seed: 0
+val_key: pred/mae
+
+vae:
+  seismic: runs/ae_seismic/vae_scaled.pt
+  rgt: runs/ae_rgt/vae_scaled.pt
+
+data:
+  h5_path: /pgeoprj/godeep/ej49/ConDe/dataset/fault_aware.h5
+  split: null
+  include_reflectivity: false
+  clip_percentiles: [0.5, 99.5]
+  min_valid_frac_section: 0.25
+  buffer_size: 4096
+  num_workers: 8
+  batch_size: 64
+  val_max_per_source: 128
+  val_batch_size: 64
+
+transform:
+  output_size: 128
+  min_valid_frac: 0.5
+
+augment:
+  aug_p: 0.8
+  p_statics: 0.1
+  statics_shift_range: [1.0, 5.0]
+  p_fault: 0.3
+  p_rotation: 0.2
+  rotation_deg_range: [-10.0, 10.0]
+  p_shear: 0.1
+  shear_deg_range: [-8.0, 8.0]
+  p_aniso: 0.2
+  p_zoom: 0.2
+  zoom_range: [0.9, 1.25]
+  p_hflip: 0.5
+
+model:                  # same architecture as the LDM denoiser (input 8 ch instead of 12)
+  block_out_channels: [128, 256, 512]
+  layers_per_block: 2
+  attention_levels: [0, 1, 2]
+  attention_head_dim: 64
+  norm_num_groups: 32
+
+optim:
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  warmup_steps: 2000
+  total_steps: 150000
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  precision: auto
+  ema_decay: 0.9999
+
+log_every: 100
+val_every: 2500
+ckpt_every: 5000
+n_vis: 8

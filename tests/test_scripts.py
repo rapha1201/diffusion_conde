@@ -1,4 +1,4 @@
-"""End-to-end smoke tests: every Phase 1 script in --debug mode on the fake HDF5 (CPU, tiny models)."""
+"""End-to-end smoke tests: every training/eval script in --debug mode on the fake HDF5 (CPU, tiny models)."""
 import json
 import os
 import subprocess
@@ -6,6 +6,8 @@ import sys
 
 import pytest
 import torch
+
+from sld.models import load_model
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -65,3 +67,35 @@ def test_latent_scale_and_phase1_gate(trained, fake_h5):
     assert "AE/B1 ratios" in out
     report = json.load(open(os.path.join(trained["ae_rgt"], "phase1_test.json")))
     assert report["models"] == ["Modelo2"] and "gate" in report
+
+
+def scaled_vaes(trained, fake_h5):
+    paths = {}
+    for name in ("ae_rgt", "ae_seismic"):
+        paths[name] = os.path.join(trained[name], "vae_scaled.pt")
+        if not os.path.exists(paths[name]):
+            run("compute_latent_scale.py", "--ckpt", os.path.join(trained[name], "ckpt_best.pt"),
+                "--h5", fake_h5, "--n-samples", "16", "--batch-size", "8")
+    return [f"vae.rgt={paths['ae_rgt']}", f"vae.seismic={paths['ae_seismic']}"]
+
+
+@pytest.mark.parametrize("cfg,prefix", [("configs/sld/ldm.yaml", "sample"), ("configs/sld/baseline_latent.yaml", "pred")])
+def test_latent_models_train_validate_and_resume(trained, fake_h5, tmp_path, cfg, prefix):
+    vaes = scaled_vaes(trained, fake_h5)
+    d = str(tmp_path / "run")
+    run("train_ldm.py", "--config", cfg, "--h5", fake_h5, "--out-dir", d, "--debug", "--set", *vaes)
+    for f in ("ckpt_latest.pt", "ckpt_best.pt", "ckpt_final.pt", "metrics.jsonl", "config.yaml"):
+        assert os.path.exists(os.path.join(d, f)), f"missing {f}"
+    val = [json.loads(l) for l in open(os.path.join(d, "metrics.jsonl")) if '"val"' in l]
+    assert val and all(k in val[-1] for k in ("loss", "ae/mae", f"{prefix}/mae", f"{prefix}/hde_px"))
+    if prefix == "sample":
+        assert "mean2/mae" in val[-1] and "spread" in val[-1]
+    assert len(os.listdir(os.path.join(d, "vis"))) == 2
+    ckpt = torch.load(os.path.join(d, "ckpt_final.pt"), map_location="cpu", weights_only=False)
+    assert ckpt["step"] == 4 and ckpt["ema"] is not None
+
+    out = run("train_ldm.py", "--config", cfg, "--h5", fake_h5, "--out-dir", d, "--debug",
+              "--set", *vaes, "optim.total_steps=6")
+    assert "[resume]" in out and "at step 4" in out
+    model, ckpt = load_model(os.path.join(d, "ckpt_final.pt"), use_ema=True)
+    assert ckpt["step"] == 6 and ckpt["ema_num_updates"] == 6

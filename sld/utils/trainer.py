@@ -5,6 +5,8 @@
 - AdamW + linear warmup + cosine decay, grad-norm clipping
 - atomic checkpoints in ``out_dir``: ckpt_latest.pt (resume), ckpt_best.pt (best val), ckpt_final.pt
 - automatic resume from ckpt_latest.pt, so resubmitting the slurm job continues the run
+- optional EMA of the weights (``optim.ema_decay``): validation and ckpt_best use the EMA weights,
+  stored under ``ema`` in the checkpoint (``load_model(..., use_ema=True)``)
 - metrics.jsonl with train and val records
 """
 import contextlib
@@ -104,6 +106,39 @@ def apply_debug(cfg, tiny_model):
 
 # ----------------------------------------------------------------------------- trainer
 
+class EMA:
+    """Exponential moving average of the floating-point state, with the usual warmup
+    ``decay_t = min(decay, (1 + t) / (10 + t))`` so early averages are not dominated by the init."""
+
+    def __init__(self, model, decay):
+        self.decay = float(decay)
+        self.num_updates = 0
+        self.shadow = {k: v.detach().clone().float() for k, v in model.state_dict().items() if v.dtype.is_floating_point}
+
+    @torch.no_grad()
+    def update(self, model):
+        self.num_updates += 1
+        d = min(self.decay, (1 + self.num_updates) / (10 + self.num_updates))
+        state = model.state_dict()
+        keys = list(self.shadow)
+        torch._foreach_lerp_([self.shadow[k] for k in keys], [state[k].float() for k in keys], 1.0 - d)
+
+    def load(self, shadow, num_updates):
+        for k, v in shadow.items():
+            self.shadow[k].copy_(v)
+        self.num_updates = int(num_updates)
+
+    @contextlib.contextmanager
+    def swapped_into(self, model):
+        """Temporarily load the EMA weights into ``model``."""
+        backup = {k: v.detach().clone() for k, v in model.state_dict().items()}
+        model.load_state_dict(self.shadow, strict=False)
+        try:
+            yield
+        finally:
+            model.load_state_dict(backup)
+
+
 class Trainer:
     def __init__(self, cfg, kind, model, out_dir, device):
         self.cfg, self.kind, self.model, self.out_dir, self.device = cfg, kind, model, out_dir, device
@@ -116,6 +151,7 @@ class Trainer:
                                            betas=tuple(o.get("betas", (0.9, 0.999))))
         self.scheduler = cosine_with_warmup(self.optimizer, int(o.get("warmup_steps", 1000)), self.total_steps,
                                             float(o.get("min_lr_ratio", 0.0)))
+        self.ema = EMA(model, o["ema_decay"]) if o.get("ema_decay") else None
         self.step = 0
         self.best = None
         self.log_path = os.path.join(out_dir, "metrics.jsonl")
@@ -126,10 +162,16 @@ class Trainer:
             return contextlib.nullcontext()
         return torch.autocast(device_type=self.device.type, dtype=self.dtype)
 
+    def eval_weights(self):
+        """Context in which validation runs: the EMA weights if enabled, else the raw ones."""
+        return self.ema.swapped_into(self.model) if self.ema is not None else contextlib.nullcontext()
+
     # -- checkpoints
     def payload(self):
         return {"kind": self.kind, "model_cfg": self.model.model_cfg, "model": self.model.state_dict(),
                 "optimizer": self.optimizer.state_dict(), "scheduler": self.scheduler.state_dict(),
+                "ema": self.ema.shadow if self.ema is not None else None,
+                "ema_num_updates": self.ema.num_updates if self.ema is not None else 0,
                 "step": self.step, "best": self.best, "config": self.cfg}
 
     def save(self, name):
@@ -147,6 +189,8 @@ class Trainer:
         self.model.load_state_dict(ckpt["model"])
         self.optimizer.load_state_dict(ckpt["optimizer"])
         self.scheduler.load_state_dict(ckpt["scheduler"])
+        if self.ema is not None and ckpt.get("ema"):
+            self.ema.load(ckpt["ema"], ckpt.get("ema_num_updates", ckpt["step"]))
         self.step, self.best = int(ckpt["step"]), ckpt.get("best")
         print(f"[resume] {path} at step {self.step} (best={self.best})", flush=True)
         return True
@@ -175,6 +219,8 @@ class Trainer:
                 self.optimizer.zero_grad(set_to_none=True)
             else:
                 self.optimizer.step()
+                if self.ema is not None:
+                    self.ema.update(self.model)
             self.scheduler.step()
             self.step += 1
             for k, v in {"loss": float(loss.detach()), "grad_norm": float(grad_norm), **parts}.items():
@@ -189,7 +235,7 @@ class Trainer:
 
             if self.step % val_every == 0 or self.step == self.total_steps:
                 self.model.eval()
-                with torch.no_grad():
+                with torch.no_grad(), self.eval_weights():
                     metrics = validate()
                 self.log({"split": "val", **metrics})
                 if self.best is None or metrics[val_key] < self.best:

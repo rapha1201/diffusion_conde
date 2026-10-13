@@ -41,6 +41,40 @@ def save_rgt_grid(seismic, target, pred, valid, path, n=8, n_levels=12, titles=(
     plt.close(fig)
 
 
+def save_ldm_grid(seismic, target, samples, valid, path, n=8, n_levels=12, max_shown=2):
+    """Columns: seismic + GT isolines | seismic + sample-1 isolines | GT | sample 1..max_shown |
+    mean of N | std of N (0-0.05) | |mean - GT| (0-0.1). ``samples``: [B,N,1,H,W]."""
+    _prep(path)
+    seismic, target, valid = (t.detach().float().cpu() for t in (seismic, target, valid))
+    samples = samples.detach().float().cpu().clamp(0, 1)
+    k = samples.shape[1]
+    mean, std = samples.mean(1), (samples.std(1) if k > 1 else torch.zeros_like(samples[:, 0]))
+    n = min(n, len(target))
+    levels = torch.linspace(0.02, 0.98, n_levels).tolist()
+    n_cols = 3 + min(k, max_shown) + (3 if k > 1 else 1)
+    fig, axes = plt.subplots(n, n_cols, figsize=(3.2 * n_cols, 3.2 * n), squeeze=False)
+    for i in range(n):
+        s, t, v = seismic[i, 0], target[i, 0], valid[i, 0]
+        _overlay(axes[i, 0], s, t, v, levels, "r")
+        _overlay(axes[i, 1], s, samples[i, 0, 0], v, levels, "c")
+        panels = [(t, "GT", "turbo", 1)] + [(samples[i, j, 0], f"sample {j + 1}", "turbo", 1)
+                                            for j in range(min(k, max_shown))]
+        if k > 1:
+            panels += [(mean[i, 0], f"mean of {k}", "turbo", 1), (std[i, 0] * v, f"std of {k} (0-0.05)", "viridis", 0.05),
+                       ((mean[i, 0] - t).abs() * v, "|mean - GT| (0-0.1)", "magma", 0.1)]
+        else:
+            panels += [((samples[i, 0, 0] - t).abs() * v, "|error| (0-0.1)", "magma", 0.1)]
+        for ax, (img, _, cmap, vmax) in zip(axes[i, 2:], panels):
+            ax.imshow(img, cmap=cmap, vmin=0, vmax=vmax)
+        titles = ["GT isolines", "sample isolines"] + [p[1] for p in panels]
+        for ax, title in zip(axes[i], titles):
+            ax.set_title(title, fontsize=8)
+            ax.set_xticks([]), ax.set_yticks([])
+    plt.tight_layout()
+    plt.savefig(path, dpi=90)
+    plt.close(fig)
+
+
 def save_seismic_grid(target, pred, path, n=8):
     """Columns: input | reconstruction | difference."""
     _prep(path)

@@ -1,9 +1,10 @@
 import torch
 
+from .diffusion import ConditionalLatentDiffusion
 from .regressor import UNetRegressor
 from .vae import LatentVAE
 
-MODEL_KINDS = {"vae": LatentVAE, "regressor": UNetRegressor}
+MODEL_KINDS = {"vae": LatentVAE, "regressor": UNetRegressor, "ldm": ConditionalLatentDiffusion}
 
 
 def build_model(kind, model_cfg):
@@ -13,8 +14,14 @@ def build_model(kind, model_cfg):
 
 
 def load_model(path, map_location="cpu", use_ema=False):
-    """Rebuild a model from a checkpoint written by sld.utils.trainer. Returns (model, checkpoint)."""
+    """Rebuild a model from a checkpoint written by sld.utils.trainer. Returns (model, checkpoint).
+
+    ``use_ema=True`` loads the EMA weights when the checkpoint has them (LDM runs), else the raw weights.
+    """
     ckpt = torch.load(path, map_location=map_location, weights_only=False)
     model = build_model(ckpt["kind"], ckpt["model_cfg"])
-    model.load_state_dict(ckpt["ema" if use_ema and ckpt.get("ema") else "model"])
+    state = ckpt["model"]
+    if use_ema and ckpt.get("ema"):
+        state = {**state, **ckpt["ema"]}
+    model.load_state_dict(state)
     return model, ckpt

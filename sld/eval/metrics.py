@@ -84,6 +84,36 @@ class RGTMetrics(_Accumulator):
                 "hde_px": s["hde"] / max(s["hde_n"], 1.0), "n": int(s["n"])}
 
 
+class SpreadMetrics(_Accumulator):
+    """Diversity of N samples of tau for the same seismic:
+    spread        mean per-pixel std across samples (valid pixels)
+    std_err_corr  per-section Pearson correlation between that std and the |error| of the sample mean,
+                  averaged over sections (> 0: the model is unsure where it is wrong)
+    """
+
+    @torch.no_grad()
+    def update(self, samples, target, valid, groups=None):
+        """samples: [B,N,1,H,W] with N >= 2."""
+        samples = samples.float().clamp(0, 1)
+        v = valid.float()
+        std = samples.std(dim=1)
+        err = (samples.mean(dim=1) - target.float()).abs()
+        px = v.flatten(1).sum(1)
+
+        def centered(x):
+            m = (x * v).flatten(1).sum(1) / px.clamp_min(1)
+            return ((x - m.view(-1, 1, 1, 1)) * v).flatten(1)
+
+        a, b = centered(std), centered(err)
+        corr = (a * b).sum(1) / (a.norm(dim=1) * b.norm(dim=1)).clamp_min(1e-12)
+        self._add_rows({"spread": (std * v).flatten(1).sum(1), "px": px, "corr": corr}, groups)
+
+    def compute(self, group="all"):
+        s = self.sums[group]
+        return {"spread": s["spread"] / max(s["px"], 1.0), "std_err_corr": s["corr"] / max(s["n"], 1.0),
+                "n": int(s["n"])}
+
+
 class SeismicMetrics(_Accumulator):
     @torch.no_grad()
     def update(self, pred, target, groups=None):
