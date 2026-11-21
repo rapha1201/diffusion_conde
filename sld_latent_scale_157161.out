@@ -1,0 +1,10 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+modality=rgt sections=9485 latent std=1.0154 mean=-0.0442 -> scale_factor=0.98483
+per-channel std=[0.9944, 1.0736, 0.9907, 0.9884] mean=[0.0029, -0.1789, 0.0002, -0.0009]
+wrote runs/ae_rgt/vae_scaled.pt
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+modality=seismic sections=9485 latent std=1.2314 mean=0.0128 -> scale_factor=0.81212
+per-channel std=[0.9975, 0.9762, 1.1294, 0.8304, 0.9005, 0.9303, 1.9141, 1.6923] mean=[-0.0116, -0.0387, -0.0334, 0.0851, 0.0016, 0.0107, 0.0545, 0.0338]
+wrote runs/ae_seismic/vae_scaled.pt

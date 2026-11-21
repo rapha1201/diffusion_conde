@@ -1,0 +1,15 @@
+{
+  "train": [
+    "Modelo3",
+    "Modelo4",
+    "Modelo5",
+    "Modelo8",
+    "Modelo9"
+  ],
+  "val": [
+    "Modelo7"
+  ],
+  "test": [
+    "Modelo2"
+  ]
+}
