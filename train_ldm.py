@@ -12,6 +12,9 @@ z_y = RGT posterior sample (LDM) or mode (B2), both scaled to unit variance.
 kind: ldm               partial noising: only z_y is noised, the UNet sees cat(z_x, z_y_t) and
                         predicts the noise of z_y; sampling re-anchors the clean z_x at every
                         reverse step (sld/models/diffusion.py).
+                        With ``condition.encoder_ckpt`` (configs/sld/ldm_clip.yaml) the UNet also sees
+                        the features of the seismic encoder pretrained by train_clip.py (Phase A),
+                        frozen unless ``condition.freeze: false``: the Stable Diffusion recipe.
 kind: latent_regressor  B2: deterministic UNet z_x -> z_y in the same latent space (MSE), decoded
                         by the same RGT decoder, so it has the same AE ceiling as the LDM.
 
@@ -69,6 +72,25 @@ def decode(vae, z, chunk=256):
     return torch.cat([vae.decode(c) for c in z.split(chunk)]).float()
 
 
+def load_condition_encoder(cond_cfg, cx, cy):
+    """Seismic encoder of a Phase-A CLIP checkpoint (``condition.encoder_ckpt``), or (None, {}) when unset.
+    Returns the encoder module and the LDM constructor arguments that rebuild the same architecture."""
+    path = cond_cfg.get("encoder_ckpt")
+    if not path:
+        return None, {}
+    clip, ckpt = load_model(path)
+    if ckpt["kind"] != "clip":
+        raise ValueError(f"{path} is a {ckpt['kind']!r} checkpoint, not a CLIP encoder (train_clip.py)")
+    mc = clip.model_cfg
+    if (mc["seismic_channels"], mc["rgt_channels"]) != (cx, cy):
+        raise ValueError(f"{path} was trained on latents with {mc['seismic_channels']}/{mc['rgt_channels']} channels, "
+                         f"the autoencoders give {cx}/{cy}")
+    print(f"condition encoder: {path} (step {ckpt['step']}, mode={mc['mode']}, dim={mc['embed_dim']}, "
+          f"frozen={cond_cfg.get('freeze', True)})", flush=True)
+    return clip.seismic_encoder, dict(cond_embed_dim=mc["embed_dim"], cond_encoder_blocks=mc["encoder_blocks"],
+                                      cond_norm_groups=mc["norm_num_groups"])
+
+
 def main():
     args = parse_args()
     cfg = load_config(args.config)
@@ -108,12 +130,18 @@ def main():
           flush=True)
 
     if kind == "ldm":
+        clip_encoder, cond_kw = load_condition_encoder(cfg.get("condition") or {}, cx, cy)
         model = ConditionalLatentDiffusion(cond_channels=cx, latent_channels=cy, **cfg["model"],
-                                           **cfg.get("diffusion", {}))
+                                           **cfg.get("diffusion", {}), **cond_kw)
+        if clip_encoder is not None:
+            model.cond_encoder.load_state_dict(clip_encoder.state_dict())
+            if (cfg.get("condition") or {}).get("freeze", True):
+                model.cond_encoder.requires_grad_(False)  # like SD's frozen CLIP text encoder
     else:
         model = UNetRegressor(in_channels=cx, out_channels=cy, **cfg["model"])
     model.to(device)
-    print(f"params={sum(p.numel() for p in model.parameters()) / 1e6:.1f}M", flush=True)
+    n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"params={sum(p.numel() for p in model.parameters()) / 1e6:.1f}M trainable={n_train / 1e6:.1f}M", flush=True)
     trainer = Trainer(cfg, "ldm" if kind == "ldm" else "regressor", model, out_dir, device)
     trainer.maybe_resume()
 

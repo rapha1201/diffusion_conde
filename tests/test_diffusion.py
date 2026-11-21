@@ -1,8 +1,10 @@
+import math
+
 import pytest
 import torch
 
 from sld.eval.metrics import SpreadMetrics
-from sld.models import ConditionalLatentDiffusion, UNetRegressor, build_model, load_model
+from sld.models import ConditionalLatentDiffusion, LatentCLIP, UNetRegressor, build_model, load_model
 from sld.utils.trainer import EMA
 
 TINY = dict(block_out_channels=[32, 64], layers_per_block=1, attention_levels=[1], norm_num_groups=8, attention_head_dim=8)
@@ -115,9 +117,81 @@ def test_ema_swap_restores_raw_weights():
     assert not torch.equal(raw["unet.conv_in.weight"], trained)
 
 
+def test_condition_encoder_feeds_unet_and_keeps_clean_anchor():
+    model = make_ldm(cond_embed_dim=16, cond_encoder_blocks=1)
+    seen = capture_unet_inputs(model)
+    z_x, z_y = torch.randn(3, 8, 16, 16), torch.randn(3, 4, 16, 16)
+    model.train().training_loss(z_x, z_y).backward()
+    assert seen[0].shape == (3, 8 + 16 + 4, 16, 16) and torch.equal(seen[0][:, :8], z_x)
+    assert all(p.grad is not None for p in model.cond_encoder.parameters())
+    z = model.eval().sample(z_x, num_inference_steps=2)
+    assert z.shape == (3, 4, 16, 16) and all(torch.equal(x[:, :8], z_x) for x in seen[1:])
+
+
+TINY_CLIP = dict(embed_dim=16, encoder_blocks=1, norm_num_groups=8, proj_dim=8)
+
+
+@pytest.mark.parametrize("mode", ["dense", "global"])
+def test_clip_loss_trains_both_encoders(mode):
+    torch.manual_seed(0)
+    model = LatentCLIP(**TINY_CLIP, mode=mode)
+    z_x, z_y = torch.randn(4, 8, 16, 16), torch.randn(4, 4, 16, 16)
+    assert model.embed_seismic(z_x).shape == (4, 256 if mode == "dense" else 1, 8)
+    loss, acc = model(z_x, z_y)
+    loss.backward()
+    assert torch.isfinite(loss) and 0.0 <= acc.item() <= 1.0
+    assert model.temperature == pytest.approx(0.07, rel=1e-4)
+    for mod in (model.seismic_encoder, model.rgt_encoder, model.seismic_head, model.rgt_head):
+        assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in mod.parameters())
+    assert model.logit_scale.grad is not None
+    with pytest.raises(ValueError):
+        model(z_x[:1], z_y[:1])
+
+
+def test_clip_finds_own_pair_and_counts_realization_twins():
+    torch.manual_seed(0)
+    model = LatentCLIP(**TINY_CLIP)
+    with torch.no_grad():
+        model.logit_scale.fill_(math.log(100.0))
+    ex = torch.nn.functional.normalize(torch.randn(5, 256, 8), dim=-1)
+    loss, acc = model.loss_from_embeddings(ex, ex.clone())  # each RGT embedding equals its seismic's
+    assert acc.item() == 1.0 and loss.item() < 0.1
+    # Sections 0 and 1 are two realizations of the same slice (same key): picking the twin is correct.
+    ey = ex.clone()
+    ey[[0, 1]] = ey[[1, 0]]
+    keys = torch.tensor([[0, 7], [0, 7], [0, 9], [1, 7], [1, 9]])
+    s2r, r2s, _ = model.retrieval(ex, ey, keys)
+    assert s2r.item() == 1.0 and r2s.item() == 1.0
+    s2r, _, _ = model.retrieval(ex, ey, torch.arange(10).view(5, 2))  # all distinct: the swap is now wrong
+    assert s2r.item() == pytest.approx(3 / 5)
+
+
+def test_clip_encoder_loads_into_ldm_condition(tmp_path):
+    clip = LatentCLIP(**TINY_CLIP)
+    path = tmp_path / "clip.pt"
+    torch.save({"kind": "clip", "model_cfg": clip.model_cfg, "model": clip.state_dict(), "step": 1}, path)
+    from train_ldm import load_condition_encoder
+    enc, kw = load_condition_encoder({"encoder_ckpt": str(path)}, 8, 4)
+    ldm = make_ldm(**kw)
+    ldm.cond_encoder.load_state_dict(enc.state_dict())  # same architecture -> same keys and shapes
+    z_x = torch.randn(2, 8, 16, 16)
+    assert torch.equal(ldm.cond_encoder(z_x), clip.seismic_encoder(z_x))
+    assert load_condition_encoder({}, 8, 4) == (None, {})
+    with pytest.raises(ValueError):
+        load_condition_encoder({"encoder_ckpt": str(path)}, 8, 3)  # latent channels mismatch
+
+
 def test_latent_regressor_shapes():
     model = UNetRegressor(in_channels=8, out_channels=4, **TINY)
     assert model(torch.randn(2, 8, 16, 16)).shape == (2, 4, 16, 16)
+
+
+def test_swap_partners_avoid_twins_and_permute():
+    from evaluate_sampling import swap_partners
+    local = torch.tensor([0, 10, 20, 30, 0, 10, 20, 30])  # two realizations sharing slice indices
+    partner = swap_partners(local)
+    assert sorted(partner.tolist()) == list(range(8))
+    assert all(local[i] != local[p] for i, p in enumerate(partner.tolist()))
 
 
 def test_spread_metrics():

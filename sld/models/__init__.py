@@ -1,10 +1,11 @@
 import torch
 
+from .clip import LatentCLIP
 from .diffusion import ConditionalLatentDiffusion
 from .regressor import UNetRegressor
 from .vae import LatentVAE
 
-MODEL_KINDS = {"vae": LatentVAE, "regressor": UNetRegressor, "ldm": ConditionalLatentDiffusion}
+MODEL_KINDS = {"vae": LatentVAE, "regressor": UNetRegressor, "ldm": ConditionalLatentDiffusion, "clip": LatentCLIP}
 
 
 def build_model(kind, model_cfg):

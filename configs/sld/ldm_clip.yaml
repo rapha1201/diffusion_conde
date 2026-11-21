@@ -1,0 +1,92 @@
+# Phase B: conditional LDM whose condition includes the frozen seismic encoder pretrained with CLIP
+# (Phase A, configs/sld/clip.yaml), like the frozen CLIP text encoder of Stable Diffusion, plus the
+# same stronger structural augmentation. Loss = denoising MSE only. Single GPU: slurm/ldm_clip.slurm
+#
+# Ablation (augmentation only, no CLIP encoder):
+#     sbatch slurm/ldm_clip.slurm --set condition.encoder_ckpt=null out_dir=runs/ldm_aug experiment=ldm_aug
+experiment: ldm_clip
+kind: ldm
+out_dir: runs/ldm_clip
+seed: 0
+val_key: sample/mae
+
+vae:
+  seismic: runs/ae_seismic/vae_scaled.pt
+  rgt: runs/ae_rgt/vae_scaled.pt
+
+condition:
+  encoder_ckpt: runs/clip/ckpt_best.pt   # its seismic encoder; architecture is read from the checkpoint
+  freeze: true                           # false = fine-tune it with the diffusion loss
+
+data:
+  h5_path: /pgeoprj/godeep/ej49/ConDe/dataset/fault_aware.h5
+  split: null
+  include_reflectivity: false
+  clip_percentiles: [0.5, 99.5]
+  min_valid_frac_section: 0.25
+  buffer_size: 4096
+  num_workers: 8
+  batch_size: 64
+  val_max_per_source: 128
+  val_batch_size: 64
+
+transform:
+  output_size: 128
+  min_valid_frac: 0.5
+
+augment:                # same as configs/sld/clip.yaml
+  aug_p: 0.9
+  p_statics: 0.25
+  statics_shift_range: [1.0, 8.0]
+  p_fault: 0.6
+  fault_throw_range: [4.0, 28.0]
+  fault_slope_range: [-0.6, 0.6]
+  p_rotation: 0.4
+  rotation_deg_range: [-25.0, 25.0]
+  p_shear: 0.3
+  shear_deg_range: [-12.0, 12.0]
+  p_aniso: 0.35
+  aniso_x_range: [0.8, 1.25]
+  aniso_z_range: [0.8, 1.25]
+  p_zoom: 0.35
+  zoom_range: [0.8, 1.35]
+  p_hflip: 0.5
+
+model:                  # same denoiser as ldm.yaml
+  block_out_channels: [128, 256, 512]
+  layers_per_block: 2
+  attention_levels: [0, 1, 2]
+  attention_head_dim: 64
+  norm_num_groups: 32
+
+diffusion:
+  num_train_timesteps: 1000
+  beta_schedule: scaled_linear
+  beta_start: 0.00085
+  beta_end: 0.012
+  prediction_type: epsilon
+  cond_drop_prob: 0.0
+
+sampling:
+  steps: 50
+  eta: 0.0
+  guidance_scale: 1.0
+
+val:
+  n_samples: 4
+
+optim:
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  warmup_steps: 2000
+  total_steps: 300000
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  precision: auto
+  ema_decay: 0.9999
+
+log_every: 100
+val_every: 2500
+ckpt_every: 5000
+n_vis: 8

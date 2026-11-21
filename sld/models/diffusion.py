@@ -9,12 +9,18 @@ the clean z_x at every reverse step, so the condition is an exact anchor.
 Training uses a DDPM schedule; sampling uses DDIM on the same betas
 (``eta=0`` deterministic, ``eta=1`` ~ ancestral). Optional condition dropout
 (``cond_drop_prob``, z_x -> 0) enables classifier-free guidance at sampling.
+
+Optional condition encoder (``cond_embed_dim > 0``): a small CNN maps z_x to
+``cond_embed_dim`` feature channels h and the UNet sees cat(z_x, h, z_y_t). It is meant to
+be the seismic encoder pretrained with CLIP (sld/models/clip.py, train_clip.py) and loaded
+by train_ldm.py, usually frozen, like the CLIP text encoder of Stable Diffusion.
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from diffusers import DDIMScheduler, DDPMScheduler
 
+from .latent_encoder import make_latent_encoder
 from .regressor import make_unet2d
 
 
@@ -22,20 +28,27 @@ class ConditionalLatentDiffusion(nn.Module):
     def __init__(self, cond_channels=8, latent_channels=4, block_out_channels=(128, 256, 512), layers_per_block=2,
                  attention_levels=(0, 1, 2), norm_num_groups=32, attention_head_dim=64,
                  num_train_timesteps=1000, beta_schedule="scaled_linear", beta_start=0.00085, beta_end=0.012,
-                 prediction_type="epsilon", cond_drop_prob=0.0):
+                 prediction_type="epsilon", cond_drop_prob=0.0,
+                 cond_embed_dim=0, cond_encoder_blocks=4, cond_norm_groups=None):
         super().__init__()
         if prediction_type not in ("epsilon", "v_prediction"):
             raise ValueError(f"prediction_type must be epsilon or v_prediction, got {prediction_type!r}")
+        cond_norm_groups = cond_norm_groups or norm_num_groups
         self.model_cfg = dict(cond_channels=cond_channels, latent_channels=latent_channels,
                               block_out_channels=list(block_out_channels), layers_per_block=layers_per_block,
                               attention_levels=sorted(set(attention_levels or ())), norm_num_groups=norm_num_groups,
                               attention_head_dim=attention_head_dim, num_train_timesteps=num_train_timesteps,
                               beta_schedule=beta_schedule, beta_start=beta_start, beta_end=beta_end,
-                              prediction_type=prediction_type, cond_drop_prob=cond_drop_prob)
+                              prediction_type=prediction_type, cond_drop_prob=cond_drop_prob,
+                              cond_embed_dim=cond_embed_dim, cond_encoder_blocks=cond_encoder_blocks,
+                              cond_norm_groups=cond_norm_groups)
         self.cond_channels, self.latent_channels = cond_channels, latent_channels
         self.prediction_type, self.cond_drop_prob = prediction_type, cond_drop_prob
-        self.unet = make_unet2d(cond_channels + latent_channels, latent_channels, block_out_channels, layers_per_block,
-                                attention_levels, norm_num_groups, attention_head_dim)
+        self.cond_encoder = (make_latent_encoder(cond_channels, cond_embed_dim, cond_encoder_blocks, cond_norm_groups)
+                             if cond_embed_dim > 0 else None)
+        self.unet = make_unet2d(cond_channels + max(cond_embed_dim, 0) + latent_channels, latent_channels,
+                                block_out_channels, layers_per_block, attention_levels, norm_num_groups,
+                                attention_head_dim)
         # clip_sample=False: latents are not bounded to [-1, 1].
         self._sched_kwargs = dict(num_train_timesteps=num_train_timesteps, beta_schedule=beta_schedule,
                                   beta_start=beta_start, beta_end=beta_end, prediction_type=prediction_type,
@@ -46,9 +59,15 @@ class ConditionalLatentDiffusion(nn.Module):
     def num_train_timesteps(self):
         return self.model_cfg["num_train_timesteps"]
 
+    def condition(self, z_x):
+        """What the UNet sees of the seismic: z_x, plus the condition-encoder features when enabled."""
+        if self.cond_encoder is None:
+            return z_x
+        return torch.cat([z_x, self.cond_encoder(z_x)], dim=1)
+
     def forward(self, z_y_t, t, z_x):
         """Noise (or v) prediction for the z_y channels."""
-        return self.unet(torch.cat([z_x, z_y_t], dim=1), t).sample
+        return self.unet(torch.cat([self.condition(z_x), z_y_t], dim=1), t).sample
 
     def training_loss(self, z_x, z_y, generator=None):
         """MSE on the z_y channels; z_x is never noised."""

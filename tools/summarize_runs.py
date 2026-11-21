@@ -29,9 +29,13 @@ def run_info(run):
                   ["spread", "std_err_corr"]]
     elif kind == "latent_regressor":
         panels = [["ae/mae", "pred/mae"], ["ae/hde_px", "pred/hde_px"]]
+    elif kind == "clip":
+        panels = [["val_models/acc_s2r", "val_models/acc_r2s", "train_models/acc_s2r", "train_models/acc_r2s", "chance"],
+                  ["val_models/loss", "train_models/loss"], ["temp"]]
     else:  # RGT autoencoder or pixel baseline
         panels = [["mae", "rmse"], ["hde_px"]]
-    val_key = cfg.get("val_key") or {"ldm": "sample/mae", "latent_regressor": "pred/mae"}.get(kind, "mae")
+    val_key = cfg.get("val_key") or {"ldm": "sample/mae", "latent_regressor": "pred/mae",
+                                     "clip": "val_models/err"}.get(kind, "mae")
     return cfg, panels, val_key
 
 
@@ -51,7 +55,7 @@ def plot(run, name, train, val, panels, out):
             pts = [(r["step"], r[k]) for r in val if k in r]
             if pts:
                 ax.plot(*zip(*pts), marker="o", ms=3, lw=1, label=k)
-        if all(r.get(k, 1) > 0 for r in val for k in keys) and not any("corr" in k for k in keys):
+        if all(r.get(k, 1) > 0 for r in val for k in keys) and not any("corr" in k or "acc" in k for k in keys):
             ax.set_yscale("log")
         ax.set_title(f"{name}: validation", fontsize=9)
         ax.legend(fontsize=7)
