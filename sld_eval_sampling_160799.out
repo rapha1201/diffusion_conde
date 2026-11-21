@@ -1,0 +1,91 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm/ckpt_best.pt (step 252500) steps=50 eta=0.0 guidance=1.0 N=4 models=['Modelo3', 'Modelo4', 'Modelo5', 'Modelo8', 'Modelo9', 'Modelo7']
+Modelo3 (train): 64 sections done
+Modelo4 (train): 31 sections done
+Modelo5 (train): 78 sections done
+Modelo8 (train): 32 sections done
+Modelo9 (train): 22 sections done
+Modelo7 (val): 64 sections done
+
+== Modelo3 (train)   sections=64
+                     MAE     RMSE   HDE px
+   ae             0.0014   0.0026     0.20
+   sample         0.0156   0.0322     2.23
+   mean4          0.0146   0.0299     2.10
+   swap           0.1371   0.1760    18.06
+   partner_gt     0.1368   0.1758    17.08
+   b1             0.0433   0.0639     5.95
+   spread=0.0175  std_err_corr=0.655
+
+== Modelo4 (train)   sections=31
+                     MAE     RMSE   HDE px
+   ae             0.0017   0.0077     0.24
+   sample         0.0254   0.0624     3.28
+   mean4          0.0298   0.0671     3.77
+   swap           0.2182   0.2851    28.62
+   partner_gt     0.2163   0.2815    27.09
+   b1             0.0487   0.0720     6.74
+   spread=0.0320  std_err_corr=0.672
+
+== Modelo5 (train)   sections=78
+                     MAE     RMSE   HDE px
+   ae             0.0014   0.0026     0.21
+   sample         0.0256   0.0546     3.60
+   mean4          0.0231   0.0462     3.26
+   swap           0.1361   0.1785    18.76
+   partner_gt     0.1378   0.1803    18.77
+   b1             0.0561   0.0803     7.96
+   spread=0.0227  std_err_corr=0.657
+
+== Modelo8 (train)   sections=32
+                     MAE     RMSE   HDE px
+   ae             0.0013   0.0025     0.24
+   sample         0.0252   0.0520     4.30
+   mean4          0.0295   0.0547     5.22
+   swap           0.2582   0.3277    33.77
+   partner_gt     0.2669   0.3364    34.37
+   b1             0.0674   0.0980    11.78
+   spread=0.0337  std_err_corr=0.709
+
+== Modelo9 (train)   sections=22
+                     MAE     RMSE   HDE px
+   ae             0.0013   0.0039     0.24
+   sample         0.0513   0.1147     6.21
+   mean4          0.0516   0.1103     6.20
+   swap           0.2232   0.2841    31.51
+   partner_gt     0.2242   0.2854    32.22
+   b1             0.0902   0.1486    10.54
+   spread=0.0368  std_err_corr=0.592
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px
+   ae             0.0013   0.0033     0.22
+   sample         0.1291   0.1787    19.32
+   mean4          0.1195   0.1623    18.47
+   swap           0.2150   0.2706    29.80
+   partner_gt     0.2114   0.2645    29.04
+   b1             0.1180   0.1618    17.97
+   spread=0.1015  std_err_corr=0.196
+
+== ALL TRAIN VOLUMES   sections=227
+                     MAE     RMSE   HDE px
+   ae             0.0014   0.0038     0.22
+   sample         0.0253   0.0595     3.46
+   mean4          0.0254   0.0568     3.48
+   swap           0.1736   0.2322    22.79
+   partner_gt     0.1756   0.2346    22.46
+   b1             0.0566   0.0873     7.87
+   spread=0.0255  std_err_corr=0.660
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px
+   ae             0.0013   0.0033     0.22
+   sample         0.1291   0.1787    19.32
+   mean4          0.1195   0.1623    18.47
+   swap           0.2150   0.2706    29.80
+   partner_gt     0.2114   0.2645    29.04
+   b1             0.1180   0.1618    17.97
+   spread=0.1015  std_err_corr=0.196
+
+wrote runs/ldm/sampling_eval/report.json and figures in runs/ldm/sampling_eval
