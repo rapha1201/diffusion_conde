@@ -75,6 +75,38 @@ def save_ldm_grid(seismic, target, samples, valid, path, n=8, n_levels=12, max_s
     plt.close(fig)
 
 
+def save_dip_grid(seismic, target, pred, valid, path, n=8, n_levels=12, **dip_kw):
+    """Columns: seismic + GT isolines | seismic + predicted isolines | reflector coherence |
+    GT dip misfit | prediction dip misfit (coherence x sin^2 of the angle to the reflector normal, 0-0.5)."""
+    from sld.guidance import DipScore
+
+    _prep(path)
+    seismic, target, pred, valid = (t.detach().float().cpu() for t in (seismic, target, pred, valid))
+    pred = pred.clamp(0, 1)
+    n = min(n, len(target))
+    seismic, target, pred, valid = seismic[:n], target[:n], pred[:n], valid[:n]
+    score = DipScore(seismic, mask=valid, **dip_kw)
+    mis_t, mis_p = score.misfit_map(target), score.misfit_map(pred)
+    dip_t, _ = score.terms(target)
+    dip_p, _ = score.terms(pred)
+    levels = torch.linspace(0.02, 0.98, n_levels).tolist()
+    fig, axes = plt.subplots(n, 5, figsize=(16, 3.2 * n), squeeze=False)
+    for i in range(n):
+        s, t, p, v = seismic[i, 0], target[i, 0], pred[i, 0], valid[i, 0]
+        _overlay(axes[i, 0], s, t, v, levels, "r")
+        _overlay(axes[i, 1], s, p, v, levels, "c")
+        axes[i, 2].imshow(score.weight[i, 0], cmap="gray", vmin=0, vmax=1)
+        axes[i, 3].imshow(mis_t[i, 0], cmap="magma", vmin=0, vmax=0.5)
+        axes[i, 4].imshow(mis_p[i, 0], cmap="magma", vmin=0, vmax=0.5)
+        for ax, title in zip(axes[i], ("GT isolines", "sample isolines", "reflector coherence",
+                                       f"GT dip misfit ({dip_t[i]:.3f})", f"sample dip misfit ({dip_p[i]:.3f})")):
+            ax.set_title(title, fontsize=8)
+            ax.set_xticks([]), ax.set_yticks([])
+    plt.tight_layout()
+    plt.savefig(path, dpi=90)
+    plt.close(fig)
+
+
 def save_seismic_grid(target, pred, path, n=8):
     """Columns: input | reconstruction | difference."""
     _prep(path)

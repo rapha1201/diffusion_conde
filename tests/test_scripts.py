@@ -108,8 +108,11 @@ def test_latent_models_train_validate_and_resume(trained, fake_h5, tmp_path, cfg
         assert "ALL TRAIN VOLUMES" in out and "ALL VAL VOLUMES" in out
         report = json.load(open(os.path.join(d, "sampling_eval", "report.json")))
         for scope in ("Modelo3", "Modelo7", "train", "val"):
-            assert {"ae", "sample", "mean2", "swap", "partner_gt", "b1", "spread"} <= set(report["results"][scope])
-        for f in ("Modelo3_ldm.png", "Modelo3_swap.png", "Modelo3_b1.png", "Modelo7_ldm.png"):
+            res = report["results"][scope]
+            assert {"ae", "sample", "mean2", "best_dip", "oracle", "swap", "partner_gt", "b1", "spread", "dip"} <= set(res)
+            assert {"gt", "sample", "mean2", "best_dip", "swap", "partner_gt", "b1", "selection"} <= set(res["dip"])
+            assert res["oracle"]["mae"] <= res["sample"]["mae"] + 1e-6
+        for f in ("Modelo3_ldm.png", "Modelo3_swap.png", "Modelo3_b1.png", "Modelo3_dip.png", "Modelo7_ldm.png"):
             assert os.path.exists(os.path.join(d, "sampling_eval", f)), f"missing {f}"
 
 
@@ -138,3 +141,14 @@ def test_clip_pretraining_then_ldm_with_frozen_encoder(trained, fake_h5, tmp_pat
     out = run("evaluate_sampling.py", "--ldm", os.path.join(ldm_dir, "ckpt_best.pt"), "--h5", fake_h5,
               "--models", "Modelo3", "--max-per-source", "4", "--batch-size", "4", "--n-samples", "2", "--steps", "2")
     assert "ALL TRAIN VOLUMES" in out
+
+    # Dip guidance at sampling (steps 2 of 2 with --guide-start 0.3 is guided), compared with compare_evals.py.
+    guided = os.path.join(ldm_dir, "guided")
+    out = run("evaluate_sampling.py", "--ldm", os.path.join(ldm_dir, "ckpt_best.pt"), "--h5", fake_h5,
+              "--models", "Modelo3", "--max-per-source", "4", "--batch-size", "4", "--n-samples", "2", "--steps", "2",
+              "--guide-scale", "0.2", "--sample-chunk", "3", "--no-swap", "--out", guided)
+    report = json.load(open(os.path.join(guided, "report.json")))
+    assert report["dip_guidance"]["scale"] == 0.2 and "swap" not in report["results"]["train"]
+    out = run("tools/compare_evals.py", f"plain={os.path.join(ldm_dir, 'sampling_eval', 'report.json')}",
+              f"guided={os.path.join(guided, 'report.json')}", "--scope", "train", "--csv", os.path.join(ldm_dir, "c.csv"))
+    assert "plain" in out and "guided" in out and os.path.exists(os.path.join(ldm_dir, "c.csv"))

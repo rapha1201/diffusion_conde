@@ -51,7 +51,7 @@ class LatentCLIP(nn.Module):
 
     @property
     def temperature(self):
-        return float(1.0 / self.logit_scale.exp())
+        return float(1.0 / self.logit_scale.detach().exp())
 
     def logits(self, ex, ey):
         """[P, B, B]: seismic i (rows) vs RGT j (columns), at each position. Always fp32 (bf16 is too coarse

@@ -14,6 +14,9 @@ Optional condition encoder (``cond_embed_dim > 0``): a small CNN maps z_x to
 ``cond_embed_dim`` feature channels h and the UNet sees cat(z_x, h, z_y_t). It is meant to
 be the seismic encoder pretrained with CLIP (sld/models/clip.py, train_clip.py) and loaded
 by train_ldm.py, usually frozen, like the CLIP text encoder of Stable Diffusion.
+
+Optional loss guidance at sampling (``sample(guide_fn=...)``): e.g. the seismic-RGT dip
+consistency of sld/guidance.py, applied to the predicted clean latent. The weights are untouched.
 """
 import torch
 import torch.nn as nn
@@ -82,8 +85,17 @@ class ConditionalLatentDiffusion(nn.Module):
         return F.mse_loss(self(z_y_t, t, z_x).float(), target.float())
 
     @torch.no_grad()
-    def sample(self, z_x, num_inference_steps=50, eta=0.0, guidance_scale=1.0, generator=None):
-        """One z_y sample per row of z_x (repeat z_x for several samples). Returns scaled z_y, float32."""
+    def sample(self, z_x, num_inference_steps=50, eta=0.0, guidance_scale=1.0, generator=None,
+               guide_fn=None, guide_scale=0.0, guide_start=0.3, guide_stop=1.0, guide_inner=1):
+        """One z_y sample per row of z_x (repeat z_x for several samples). Returns scaled z_y, float32.
+
+        Optional loss guidance (``guide_fn``, ``guide_scale > 0``): at the steps whose progress
+        i / num_inference_steps lies in [guide_start, guide_stop), the predicted clean latent
+        z0 = (z_t - sqrt(1 - a_t) eps) / sqrt(a_t) takes ``guide_inner`` normalized gradient steps
+        on guide_fn(z0) -> per-row loss [B] (e.g. the dip score of the decoded RGT), each moving its
+        elements by ``guide_scale`` in RMS, and the noise prediction is recomputed from the new z0.
+        Gradients go through guide_fn only (e.g. the frozen decoder), never through the UNet.
+        """
         sched = DDIMScheduler(**self._sched_kwargs, set_alpha_to_one=True, timestep_spacing="trailing")
         sched.set_timesteps(num_inference_steps, device=z_x.device)
         b, _, h, w = z_x.shape
@@ -91,10 +103,33 @@ class ConditionalLatentDiffusion(nn.Module):
         z = torch.randn((b, self.latent_channels, h, w), generator=generator, device=z_x.device)
         guided = guidance_scale != 1.0
         cond = torch.cat([z_x, torch.zeros_like(z_x)]) if guided else z_x
-        for t in sched.timesteps:
+        steer = guide_fn is not None and guide_scale > 0
+        n_steps = len(sched.timesteps)
+        for i, t in enumerate(sched.timesteps):
             out = self(torch.cat([z, z]) if guided else z, t, cond).float()  # clean z_x re-anchored every step
             if guided:
                 out_c, out_u = out.chunk(2)
                 out = out_u + guidance_scale * (out_c - out_u)
+            if steer and guide_start <= i / n_steps < guide_stop:
+                out = self._steer(sched, z, t, out, guide_fn, guide_scale, guide_inner)
             z = sched.step(out, t, z, eta=eta, generator=generator).prev_sample
         return z
+
+    def _steer(self, sched, z, t, out, guide_fn, scale, inner):
+        """Move the predicted z0 down the gradient of guide_fn, return the matching model output."""
+        a = float(sched.alphas_cumprod[int(t)])
+        sa, s1a = a ** 0.5, max(1.0 - a, 1e-12) ** 0.5
+        if self.prediction_type == "epsilon":
+            z0 = (z - s1a * out) / sa
+        else:  # v-prediction: z0 = sqrt(a) z - sqrt(1-a) v
+            z0 = sa * z - s1a * out
+        with torch.enable_grad():
+            for _ in range(max(1, int(inner))):
+                x = z0.detach().requires_grad_(True)
+                (g,) = torch.autograd.grad(guide_fn(x).sum(), x)
+                g = g.float()
+                rms = g.pow(2).flatten(1).mean(1).sqrt().clamp_min(1e-12).view(-1, 1, 1, 1)
+                z0 = z0.detach() - scale * g / rms
+        if self.prediction_type == "epsilon":
+            return (z - sa * z0) / s1a
+        return (sa * z - z0) / s1a
