@@ -27,9 +27,13 @@ flags sample from the same noise: their difference is the effect of the guidance
 
 Outputs in --out (default <ldm dir>/sampling_eval): report.json and, per volume, figures for n_vis
 sections spread over the volume: <model>_ldm.png (GT, samples, mean, std), <model>_swap.png,
-<model>_b1.png, <model>_dip.png (reflector coherence and per-pixel misfit of the GT and of a sample).
+<model>_b1.png, <model>_dip.png (reflector coherence and per-pixel misfit of the GT and of a sample),
+<model>_best.png / <model>_worst.png (the --gallery K best and worst sections by mean-of-N MAE), and
+sections.csv: one row per section with its errors, the model uncertainty and seismic-only / GT descriptors
+(sld/eval/descriptors.py), for tools/analyze_sections.py.
 """
 import argparse
+import csv
 import json
 import os
 from collections import defaultdict
@@ -37,7 +41,8 @@ from collections import defaultdict
 import torch
 
 from sld.data import PairTransform, load_split
-from sld.eval.metrics import RGTMetrics, SpreadMetrics
+from sld.eval.descriptors import gt_descriptors, realization_tags, section_hde, seismic_descriptors
+from sld.eval.metrics import DEFAULT_LEVELS, RGTMetrics, SpreadMetrics
 from sld.eval.plots import save_dip_grid, save_ldm_grid, save_rgt_grid
 from sld.guidance import DipScore
 from sld.models import load_model
@@ -70,6 +75,8 @@ def parse_args():
     g.add_argument("--mono-weight", type=float, default=1.0, help="weight of the depth-monotonicity term")
     g.add_argument("--sigma-tensor", type=float, default=3.0, help="structure-tensor smoothing (px)")
     p.add_argument("--n-vis", type=int, default=8)
+    p.add_argument("--gallery", type=int, default=6,
+                   help="per volume, figures of the K best and K worst sections by mean-of-N MAE (0 = none)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default=None)
     return p.parse_args()
@@ -83,6 +90,10 @@ def swap_partners(local_idx):
     partner = torch.empty_like(order)
     partner[order] = order[(torch.arange(n) + n // 2) % n]
     return partner
+
+
+def _g(x):
+    return "?" if x is None else f"{x:g}"
 
 
 def section_mae(pred, target, valid):
@@ -185,6 +196,7 @@ def main():
 
     # metrics[scope][row]: scope = model name and its split part ("train" / "val" / ...)
     metrics = defaultdict(lambda: {**{r: RGTMetrics() for r in ROWS}, "spread": SpreadMetrics(), "dip": DipStats()})
+    sections = []  # one dict per section, written to sections.csv (tools/analyze_sections.py)
     for model in models:
         scopes = (model, part_of.get(model, "other"))
         loader, ds = make_eval_loader(data_cfg, [model], max_per_source=args.max_per_source, batch_size=args.batch_size)
@@ -219,6 +231,27 @@ def main():
                     "oracle": score.terms(oracle.clamp(0, 1))}
             if pred_b1 is not None:
                 dips["b1"] = score.terms(pred_b1.clamp(0, 1))
+
+            # One record per section: errors, model uncertainty, seismic-only and GT descriptors.
+            mean_tau = tau.mean(1)
+            rec = {"mean_mae": section_mae(mean_tau, r, v), "mean_hde": section_hde(mean_tau, r, v, DEFAULT_LEVELS),
+                   "sample_mae": mae[:, 0], "sample_hde": section_hde(tau[:, 0], r, v, DEFAULT_LEVELS),
+                   "best_dip_mae": section_mae(best, r, v), "oracle_mae": mae.min(1).values,
+                   "spread": (tau.float().clamp(0, 1).std(1) * v).flatten(1).sum(1) / v.flatten(1).sum(1).clamp_min(1)
+                   if n_samples > 1 else torch.zeros(b, device=device),
+                   "sample_dip": dips["sample"][0].view(b, n_samples).mean(1), "sample_score": sel.mean(1)}
+            if pred_b1 is not None:
+                rec.update(b1_mae=section_mae(pred_b1, r, v), b1_hde=section_hde(pred_b1, r, v, DEFAULT_LEVELS))
+            rec.update(seismic_descriptors(s, sigma_tensor=args.sigma_tensor))
+            rec.update(gt_descriptors(s, r, v, sigma_tensor=args.sigma_tensor))
+            rec = {k: x.float().cpu().tolist() for k, x in rec.items()}
+            for i in range(b):
+                src = ds.sources[int(meta[i, 0])].seismic_path
+                sections.append({"volume": model, "part": scopes[1], "source": src.split("/")[-1],
+                                 "slice": int(meta[i, 1]), **realization_tags(src),
+                                 **{k: x[i] for k, x in rec.items()}})
+            keep_all["mean_mae"].append(torch.tensor(rec["mean_mae"]))
+            keep_all["src"].append(meta[:, 0])
             for scope in scopes:
                 m = metrics[scope]
                 m["ae"].update(ae, r, v)
@@ -272,6 +305,17 @@ def main():
         if b1 is not None:
             save_rgt_grid(d["s"][vis], d["r"][vis], d["b1"][vis], d["v"][vis], os.path.join(out_dir, f"{model}_b1.png"),
                           n=len(vis), titles=("GT", "B1"))
+        if args.gallery > 0:  # the K best and K worst sections of the volume, by mean-of-N MAE
+            k = min(args.gallery, n)
+            rank = torch.argsort(d["mean_mae"])
+            for tag, idx in (("best", rank[:k]), ("worst", rank.flip(0)[:k])):
+                row_labels = []
+                for i in idx.tolist():
+                    t = realization_tags(ds.sources[int(d["src"][i])].seismic_path)
+                    row_labels.append(f"{_g(t['freq_hz'])}Hz noise {_g(t['noise'])} salt {t['salt']}\n"
+                                      f"slice {int(d['local'][i])}  MAE {float(d['mean_mae'][i]):.3f}")
+                save_ldm_grid(d["s"][idx], d["r"][idx], d["tau"][idx], d["v"][idx],
+                              os.path.join(out_dir, f"{model}_{tag}.png"), n=k, labels=row_labels)
         print(f"{model} ({scopes[1]}): {n} sections done", flush=True)
 
     report = {"ldm": args.ldm, "ldm_step": ckpt["step"], "baseline": args.baseline, "steps": steps, "eta": eta,
@@ -309,7 +353,13 @@ def main():
     path = os.path.join(out_dir, "report.json")
     with open(path, "w") as fp:
         json.dump(report, fp, indent=2)
-    print(f"\nwrote {path} and figures in {out_dir}")
+    if sections:
+        keys = list(dict.fromkeys(k for row in sections for k in row))
+        with open(os.path.join(out_dir, "sections.csv"), "w", newline="") as fp:
+            w = csv.DictWriter(fp, fieldnames=keys)
+            w.writeheader()
+            w.writerows(sections)
+    print(f"\nwrote {path}, sections.csv ({len(sections)} sections) and figures in {out_dir}")
 
 
 if __name__ == "__main__":

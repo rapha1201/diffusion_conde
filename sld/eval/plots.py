@@ -41,9 +41,10 @@ def save_rgt_grid(seismic, target, pred, valid, path, n=8, n_levels=12, titles=(
     plt.close(fig)
 
 
-def save_ldm_grid(seismic, target, samples, valid, path, n=8, n_levels=12, max_shown=2):
+def save_ldm_grid(seismic, target, samples, valid, path, n=8, n_levels=12, max_shown=2, labels=None):
     """Columns: seismic + GT isolines | seismic + sample-1 isolines | GT | sample 1..max_shown |
-    mean of N | std of N (0-0.05) | |mean - GT| (0-0.1). ``samples``: [B,N,1,H,W]."""
+    mean of N | std of N (0-0.05) | |mean - GT| (0-0.1). ``samples``: [B,N,1,H,W].
+    ``labels``: optional text per row (e.g. source and error), shown left of the row."""
     _prep(path)
     seismic, target, valid = (t.detach().float().cpu() for t in (seismic, target, valid))
     samples = samples.detach().float().cpu().clamp(0, 1)
@@ -70,6 +71,8 @@ def save_ldm_grid(seismic, target, samples, valid, path, n=8, n_levels=12, max_s
         for ax, title in zip(axes[i], titles):
             ax.set_title(title, fontsize=8)
             ax.set_xticks([]), ax.set_yticks([])
+        if labels is not None:
+            axes[i, 0].set_ylabel(labels[i], fontsize=7)
     plt.tight_layout()
     plt.savefig(path, dpi=90)
     plt.close(fig)

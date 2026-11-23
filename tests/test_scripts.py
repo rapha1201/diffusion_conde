@@ -152,3 +152,18 @@ def test_clip_pretraining_then_ldm_with_frozen_encoder(trained, fake_h5, tmp_pat
     out = run("tools/compare_evals.py", f"plain={os.path.join(ldm_dir, 'sampling_eval', 'report.json')}",
               f"guided={os.path.join(guided, 'report.json')}", "--scope", "train", "--csv", os.path.join(ldm_dir, "c.csv"))
     assert "plain" in out and "guided" in out and os.path.exists(os.path.join(ldm_dir, "c.csv"))
+
+    # Per-section analysis: sections.csv + best/worst galleries, then the paired plain-vs-guided analysis.
+    plain_csv = os.path.join(ldm_dir, "sampling_eval", "sections.csv")
+    header = open(plain_csv).readline().strip().split(",")
+    for k in ("volume", "part", "source", "slice", "regime", "mean_mae", "sample_hde", "oracle_mae", "spread",
+              "coherence", "dip_deg", "wavenumber", "gt_overturn", "gt_disc_frac"):
+        assert k in header, k
+    for f in ("Modelo3_best.png", "Modelo3_worst.png"):
+        assert os.path.exists(os.path.join(ldm_dir, "sampling_eval", f)), f"missing {f}"
+    analysis = os.path.join(ldm_dir, "analysis")
+    out = run("tools/analyze_sections.py", f"plain={plain_csv}", f"guided={os.path.join(guided, 'sections.csv')}",
+              "--out", analysis)
+    assert "Spearman" in out and "Paired" in out
+    assert os.path.exists(os.path.join(analysis, "analysis.md"))
+    assert os.path.exists(os.path.join(analysis, "scatter_mean_mae.png"))
