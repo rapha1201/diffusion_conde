@@ -1,0 +1,152 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance=off models=['Modelo3', 'Modelo4', 'Modelo5', 'Modelo8', 'Modelo9', 'Modelo7', 'Modelo2']
+Modelo3 (train): 64 sections done
+Modelo4 (train): 31 sections done
+Modelo5 (train): 78 sections done
+Modelo8 (train): 32 sections done
+Modelo9 (train): 22 sections done
+Modelo7 (val): 64 sections done
+Modelo2 (test): 96 sections done
+
+== Modelo3 (train)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0316  0.0004
+   ae             0.0014   0.0026     0.20  0.0294  0.0002
+   sample         0.0346   0.0727     4.99  0.0306  0.0004
+   mean4          0.0302   0.0510     4.30  0.0325  0.0001
+   best_dip       0.0419   0.0767     5.89  0.0276  0.0000
+   oracle         0.0202   0.0406     2.91  0.0305  0.0003
+   swap           0.1417   0.1826    18.72  0.1152  0.0133
+   partner_gt     0.1368   0.1758    17.08  0.1128  0.0004
+   b1             0.0433   0.0639     5.95  0.0445  0.0004
+   spread=0.0359  std_err_corr=0.615
+   dip score vs MAE: pearson=0.033  within-section=0.053
+
+== Modelo4 (train)   sections=31
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0429  0.0059
+   ae             0.0017   0.0077     0.24  0.0444  0.0061
+   sample         0.0376   0.0721     5.47  0.0402  0.0041
+   mean4          0.0400   0.0696     5.57  0.0452  0.0022
+   best_dip       0.0355   0.0766     4.71  0.0343  0.0021
+   oracle         0.0243   0.0558     3.43  0.0393  0.0026
+   swap           0.2322   0.3000    29.72  0.1114  0.0102
+   partner_gt     0.2163   0.2815    27.09  0.1037  0.0059
+   b1             0.0487   0.0720     6.74  0.0828  0.0064
+   spread=0.0512  std_err_corr=0.593
+   dip score vs MAE: pearson=0.094  within-section=0.100
+
+== Modelo5 (train)   sections=78
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0404  0.0000
+   ae             0.0014   0.0026     0.21  0.0396  0.0001
+   sample         0.0404   0.0732     5.91  0.0399  0.0001
+   mean4          0.0392   0.0634     5.66  0.0428  0.0000
+   best_dip       0.0462   0.0854     6.60  0.0344  0.0000
+   oracle         0.0244   0.0508     3.45  0.0389  0.0000
+   swap           0.1362   0.1774    18.86  0.1290  0.0025
+   partner_gt     0.1378   0.1803    18.77  0.1271  0.0000
+   b1             0.0561   0.0803     7.96  0.0551  0.0002
+   spread=0.0447  std_err_corr=0.589
+   dip score vs MAE: pearson=0.064  within-section=0.105
+
+== Modelo8 (train)   sections=32
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0707  0.0000
+   ae             0.0013   0.0025     0.24  0.0704  0.0002
+   sample         0.0860   0.1492    14.26  0.0689  0.0002
+   mean4          0.0635   0.1055    10.77  0.0756  0.0000
+   best_dip       0.1039   0.1821    15.96  0.0601  0.0000
+   oracle         0.0343   0.0593     6.36  0.0715  0.0002
+   swap           0.2546   0.3212    33.02  0.4850  0.0002
+   partner_gt     0.2669   0.3364    34.37  0.4814  0.0000
+   b1             0.0674   0.0980    11.78  0.0949  0.0010
+   spread=0.0759  std_err_corr=0.509
+   dip score vs MAE: pearson=0.171  within-section=-0.151
+
+== Modelo9 (train)   sections=22
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0563  0.0002
+   ae             0.0013   0.0039     0.24  0.0559  0.0001
+   sample         0.1147   0.1824    14.94  0.0455  0.0007
+   mean4          0.0980   0.1535    12.63  0.0577  0.0001
+   best_dip       0.1027   0.1749    12.61  0.0354  0.0002
+   oracle         0.0674   0.1325     8.75  0.0403  0.0002
+   swap           0.2221   0.2930    31.32  0.1510  0.0003
+   partner_gt     0.2242   0.2854    32.22  0.1671  0.0002
+   b1             0.0902   0.1486    10.54  0.0835  0.0031
+   spread=0.0911  std_err_corr=0.526
+   dip score vs MAE: pearson=0.269  within-section=0.232
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1415   0.1953    21.52  0.0482  0.0010
+   mean4          0.1180   0.1583    18.34  0.0570  0.0002
+   best_dip       0.1432   0.1990    21.08  0.0376  0.0001
+   oracle         0.0947   0.1389    14.56  0.0493  0.0009
+   swap           0.2115   0.2660    29.19  0.2581  0.0007
+   partner_gt     0.2114   0.2645    29.04  0.2507  0.0005
+   b1             0.1180   0.1618    17.97  0.0666  0.0002
+   spread=0.1062  std_err_corr=0.305
+   dip score vs MAE: pearson=0.138  within-section=0.114
+
+== Modelo2 (test)   sections=96
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0574  0.0270
+   ae             0.0017   0.0033     0.30  0.0559  0.0268
+   sample         0.1372   0.1855    20.86  0.0522  0.0015
+   mean4          0.1195   0.1629    18.44  0.0622  0.0005
+   best_dip       0.1385   0.1939    20.40  0.0387  0.0001
+   oracle         0.0948   0.1414    14.66  0.0538  0.0014
+   swap           0.1749   0.2313    25.29  0.1612  0.0016
+   partner_gt     0.1634   0.2091    23.82  0.1839  0.0270
+   b1             0.1229   0.1700    18.12  0.0684  0.0001
+   spread=0.0964  std_err_corr=0.139
+   dip score vs MAE: pearson=0.427  within-section=0.050
+
+== ALL TRAIN VOLUMES   sections=227
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0441  0.0009
+   ae             0.0014   0.0038     0.22  0.0433  0.0010
+   sample         0.0524   0.1026     7.36  0.0419  0.0008
+   mean4          0.0461   0.0818     6.46  0.0463  0.0003
+   best_dip       0.0575   0.1129     7.76  0.0362  0.0003
+   oracle         0.0289   0.0634     4.10  0.0413  0.0005
+   swap           0.1761   0.2356    23.08  0.1750  0.0061
+   partner_gt     0.1756   0.2346    22.46  0.1737  0.0009
+   b1             0.0566   0.0873     7.87  0.0642  0.0015
+   spread=0.0522  std_err_corr=0.579
+   dip score vs MAE: pearson=0.132  within-section=0.066
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1415   0.1953    21.52  0.0482  0.0010
+   mean4          0.1180   0.1583    18.34  0.0570  0.0002
+   best_dip       0.1432   0.1990    21.08  0.0376  0.0001
+   oracle         0.0947   0.1389    14.56  0.0493  0.0009
+   swap           0.2115   0.2660    29.19  0.2581  0.0007
+   partner_gt     0.2114   0.2645    29.04  0.2507  0.0005
+   b1             0.1180   0.1618    17.97  0.0666  0.0002
+   spread=0.1062  std_err_corr=0.305
+   dip score vs MAE: pearson=0.138  within-section=0.114
+
+== ALL TEST VOLUMES   sections=96
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0574  0.0270
+   ae             0.0017   0.0033     0.30  0.0559  0.0268
+   sample         0.1372   0.1855    20.86  0.0522  0.0015
+   mean4          0.1195   0.1629    18.44  0.0622  0.0005
+   best_dip       0.1385   0.1939    20.40  0.0387  0.0001
+   oracle         0.0948   0.1414    14.66  0.0538  0.0014
+   swap           0.1749   0.2313    25.29  0.1612  0.0016
+   partner_gt     0.1634   0.2091    23.82  0.1839  0.0270
+   b1             0.1229   0.1700    18.12  0.0684  0.0001
+   spread=0.0964  std_err_corr=0.139
+   dip score vs MAE: pearson=0.427  within-section=0.050
+
+wrote runs/ldm_clip/sampling_eval/report.json and figures in runs/ldm_clip/sampling_eval

@@ -1,0 +1,18 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+usage: evaluate_sampling.py [-h] --ldm LDM [--baseline BASELINE]
+                            [--models [MODELS ...]] [--h5 H5]
+                            [--max-per-source MAX_PER_SOURCE]
+                            [--batch-size BATCH_SIZE]
+                            [--sample-chunk SAMPLE_CHUNK]
+                            [--n-samples N_SAMPLES] [--steps STEPS]
+                            [--eta ETA] [--guidance-scale GUIDANCE_SCALE]
+                            [--no-swap] [--guide-scale GUIDE_SCALE]
+                            [--guide-start GUIDE_START]
+                            [--guide-stop GUIDE_STOP]
+                            [--guide-inner GUIDE_INNER]
+                            [--mono-weight MONO_WEIGHT]
+                            [--sigma-tensor SIGMA_TENSOR] [--n-vis N_VIS]
+                            [--seed SEED] [--out OUT]
+evaluate_sampling.py: error: argument --guide-scale: invalid float value: 'L'
+srun: error: gr13b02n01: task 0: Exited with exit code 2

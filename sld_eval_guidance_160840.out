@@ -1,0 +1,250 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance=off models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1415   0.1953    21.52  0.0482  0.0010
+   mean4          0.1180   0.1583    18.34  0.0570  0.0002
+   best_dip       0.1432   0.1990    21.08  0.0376  0.0001
+   oracle         0.0947   0.1389    14.56  0.0493  0.0009
+   spread=0.1062  std_err_corr=0.305
+   dip score vs MAE: pearson=0.138  within-section=0.114
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1415   0.1953    21.52  0.0482  0.0010
+   mean4          0.1180   0.1583    18.34  0.0570  0.0002
+   best_dip       0.1432   0.1990    21.08  0.0376  0.0001
+   oracle         0.0947   0.1389    14.56  0.0493  0.0009
+   spread=0.1062  std_err_corr=0.305
+   dip score vs MAE: pearson=0.138  within-section=0.114
+
+wrote runs/ldm_clip/guide_sweep/scale_0/report.json and figures in runs/ldm_clip/guide_sweep/scale_0
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance={'scale': 0.05, 'start': 0.3, 'stop': 1.0, 'inner': 1, 'sigma_tensor': 3.0, 'mono_weight': 1.0} models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1353   0.1881    20.36  0.0331  0.0001
+   mean4          0.1140   0.1546    17.41  0.0388  0.0000
+   best_dip       0.1189   0.1661    17.42  0.0266  0.0001
+   oracle         0.0919   0.1369    13.73  0.0312  0.0002
+   spread=0.0942  std_err_corr=0.269
+   dip score vs MAE: pearson=0.169  within-section=0.234
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1353   0.1881    20.36  0.0331  0.0001
+   mean4          0.1140   0.1546    17.41  0.0388  0.0000
+   best_dip       0.1189   0.1661    17.42  0.0266  0.0001
+   oracle         0.0919   0.1369    13.73  0.0312  0.0002
+   spread=0.0942  std_err_corr=0.269
+   dip score vs MAE: pearson=0.169  within-section=0.234
+
+wrote runs/ldm_clip/guide_sweep/scale_0.05/report.json and figures in runs/ldm_clip/guide_sweep/scale_0.05
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance={'scale': 0.1, 'start': 0.3, 'stop': 1.0, 'inner': 1, 'sigma_tensor': 3.0, 'mono_weight': 1.0} models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1296   0.1813    19.33  0.0373  0.0008
+   mean4          0.1106   0.1518    16.70  0.0344  0.0001
+   best_dip       0.1244   0.1733    18.45  0.0282  0.0002
+   oracle         0.0907   0.1298    13.49  0.0377  0.0004
+   spread=0.0835  std_err_corr=0.241
+   dip score vs MAE: pearson=0.168  within-section=0.113
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1296   0.1813    19.33  0.0373  0.0008
+   mean4          0.1106   0.1518    16.70  0.0344  0.0001
+   best_dip       0.1244   0.1733    18.45  0.0282  0.0002
+   oracle         0.0907   0.1298    13.49  0.0377  0.0004
+   spread=0.0835  std_err_corr=0.241
+   dip score vs MAE: pearson=0.168  within-section=0.113
+
+wrote runs/ldm_clip/guide_sweep/scale_0.1/report.json and figures in runs/ldm_clip/guide_sweep/scale_0.1
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance={'scale': 0.2, 'start': 0.3, 'stop': 1.0, 'inner': 1, 'sigma_tensor': 3.0, 'mono_weight': 1.0} models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1307   0.1819    19.21  0.1147  0.0055
+   mean4          0.1116   0.1536    16.68  0.0687  0.0012
+   best_dip       0.1242   0.1760    18.33  0.0866  0.0023
+   oracle         0.0987   0.1385    14.44  0.1122  0.0034
+   spread=0.0829  std_err_corr=0.212
+   dip score vs MAE: pearson=0.066  within-section=0.088
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1307   0.1819    19.21  0.1147  0.0055
+   mean4          0.1116   0.1536    16.68  0.0687  0.0012
+   best_dip       0.1242   0.1760    18.33  0.0866  0.0023
+   oracle         0.0987   0.1385    14.44  0.1122  0.0034
+   spread=0.0829  std_err_corr=0.212
+   dip score vs MAE: pearson=0.066  within-section=0.088
+
+wrote runs/ldm_clip/guide_sweep/scale_0.2/report.json and figures in runs/ldm_clip/guide_sweep/scale_0.2
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance={'scale': 0.5, 'start': 0.3, 'stop': 1.0, 'inner': 1, 'sigma_tensor': 3.0, 'mono_weight': 1.0} models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1561   0.2106    22.30  0.2439  0.0149
+   mean4          0.1279   0.1737    18.62  0.1508  0.0041
+   best_dip       0.1506   0.2032    21.50  0.1950  0.0115
+   oracle         0.1305   0.1792    18.66  0.2364  0.0152
+   spread=0.1040  std_err_corr=0.171
+   dip score vs MAE: pearson=0.099  within-section=0.089
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1561   0.2106    22.30  0.2439  0.0149
+   mean4          0.1279   0.1737    18.62  0.1508  0.0041
+   best_dip       0.1506   0.2032    21.50  0.1950  0.0115
+   oracle         0.1305   0.1792    18.66  0.2364  0.0152
+   spread=0.1040  std_err_corr=0.171
+   dip score vs MAE: pearson=0.099  within-section=0.089
+
+wrote runs/ldm_clip/guide_sweep/scale_0.5/report.json and figures in runs/ldm_clip/guide_sweep/scale_0.5
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=4 dip_guidance={'scale': 1.0, 'start': 0.3, 'stop': 1.0, 'inner': 1, 'sigma_tensor': 3.0, 'mono_weight': 1.0} models=['Modelo7']
+Modelo7 (val): 64 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.2016   0.2631    26.42  0.3282  0.0352
+   mean4          0.1517   0.2015    20.73  0.2572  0.0119
+   best_dip       0.1954   0.2541    25.85  0.2838  0.0307
+   oracle         0.1807   0.2366    23.81  0.3239  0.0308
+   spread=0.1518  std_err_corr=0.073
+   dip score vs MAE: pearson=0.118  within-section=0.151
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.2016   0.2631    26.42  0.3282  0.0352
+   mean4          0.1517   0.2015    20.73  0.2572  0.0119
+   best_dip       0.1954   0.2541    25.85  0.2838  0.0307
+   oracle         0.1807   0.2366    23.81  0.3239  0.0308
+   spread=0.1518  std_err_corr=0.073
+   dip score vs MAE: pearson=0.118  within-section=0.151
+
+wrote runs/ldm_clip/guide_sweep/scale_1/report.json and figures in runs/ldm_clip/guide_sweep/scale_1
+- scale_0: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, no dip guidance)
+- scale_0.05: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, dip guidance 0.05 from 0.3)
+- scale_0.1: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, dip guidance 0.1 from 0.3)
+- scale_0.2: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, dip guidance 0.2 from 0.3)
+- scale_0.5: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, dip guidance 0.5 from 0.3)
+- scale_1: runs/ldm_clip/ckpt_eval.pt (step 157500, 50 DDIM steps, N=4, dip guidance 1 from 0.3)
+
+### Modelo7
+
+| model | row | MAE | RMSE | HDE px | dip | mono |
+|---|---|---:|---:|---:|---:|---:|
+| scale_0 | sample | 0.1415 | 0.1953 | 21.52 | 0.0482 | 0.0010 |
+| scale_0 | mean4 | 0.1180 | 0.1583 | 18.34 | 0.0570 | 0.0002 |
+| scale_0 | best_dip | 0.1432 | 0.1990 | 21.08 | 0.0376 | 0.0001 |
+| scale_0 | oracle | 0.0947 | 0.1389 | 14.56 | 0.0493 | 0.0009 |
+| scale_0.05 | sample | 0.1353 | 0.1881 | 20.36 | 0.0331 | 0.0001 |
+| scale_0.05 | mean4 | 0.1140 | 0.1546 | 17.41 | 0.0388 | 0.0000 |
+| scale_0.05 | best_dip | 0.1189 | 0.1661 | 17.42 | 0.0266 | 0.0001 |
+| scale_0.05 | oracle | 0.0919 | 0.1369 | 13.73 | 0.0312 | 0.0002 |
+| scale_0.1 | sample | 0.1296 | 0.1813 | 19.33 | 0.0373 | 0.0008 |
+| scale_0.1 | mean4 | 0.1106 | 0.1518 | 16.70 | 0.0344 | 0.0001 |
+| scale_0.1 | best_dip | 0.1244 | 0.1733 | 18.45 | 0.0282 | 0.0002 |
+| scale_0.1 | oracle | 0.0907 | 0.1298 | 13.49 | 0.0377 | 0.0004 |
+| scale_0.2 | sample | 0.1307 | 0.1819 | 19.21 | 0.1147 | 0.0055 |
+| scale_0.2 | mean4 | 0.1116 | 0.1536 | 16.68 | 0.0687 | 0.0012 |
+| scale_0.2 | best_dip | 0.1242 | 0.1760 | 18.33 | 0.0866 | 0.0023 |
+| scale_0.2 | oracle | 0.0987 | 0.1385 | 14.44 | 0.1122 | 0.0034 |
+| scale_0.5 | sample | 0.1561 | 0.2106 | 22.30 | 0.2439 | 0.0149 |
+| scale_0.5 | mean4 | 0.1279 | 0.1737 | 18.62 | 0.1508 | 0.0041 |
+| scale_0.5 | best_dip | 0.1506 | 0.2032 | 21.50 | 0.1950 | 0.0115 |
+| scale_0.5 | oracle | 0.1305 | 0.1792 | 18.66 | 0.2364 | 0.0152 |
+| scale_1 | sample | 0.2016 | 0.2631 | 26.42 | 0.3282 | 0.0352 |
+| scale_1 | mean4 | 0.1517 | 0.2015 | 20.73 | 0.2572 | 0.0119 |
+| scale_1 | best_dip | 0.1954 | 0.2541 | 25.85 | 0.2838 | 0.0307 |
+| scale_1 | oracle | 0.1807 | 0.2366 | 23.81 | 0.3239 | 0.0308 |
+
+GT dip 0.0460, mono 0.0005 (reference: what a perfect RGT scores)
+scale_0: dip score vs MAE pearson 0.138, within section 0.114
+scale_0.05: dip score vs MAE pearson 0.169, within section 0.234
+scale_0.1: dip score vs MAE pearson 0.168, within section 0.113
+scale_0.2: dip score vs MAE pearson 0.066, within section 0.088
+scale_0.5: dip score vs MAE pearson 0.099, within section 0.089
+scale_1: dip score vs MAE pearson 0.118, within section 0.151
+
+### val
+
+| model | row | MAE | RMSE | HDE px | dip | mono |
+|---|---|---:|---:|---:|---:|---:|
+| scale_0 | sample | 0.1415 | 0.1953 | 21.52 | 0.0482 | 0.0010 |
+| scale_0 | mean4 | 0.1180 | 0.1583 | 18.34 | 0.0570 | 0.0002 |
+| scale_0 | best_dip | 0.1432 | 0.1990 | 21.08 | 0.0376 | 0.0001 |
+| scale_0 | oracle | 0.0947 | 0.1389 | 14.56 | 0.0493 | 0.0009 |
+| scale_0.05 | sample | 0.1353 | 0.1881 | 20.36 | 0.0331 | 0.0001 |
+| scale_0.05 | mean4 | 0.1140 | 0.1546 | 17.41 | 0.0388 | 0.0000 |
+| scale_0.05 | best_dip | 0.1189 | 0.1661 | 17.42 | 0.0266 | 0.0001 |
+| scale_0.05 | oracle | 0.0919 | 0.1369 | 13.73 | 0.0312 | 0.0002 |
+| scale_0.1 | sample | 0.1296 | 0.1813 | 19.33 | 0.0373 | 0.0008 |
+| scale_0.1 | mean4 | 0.1106 | 0.1518 | 16.70 | 0.0344 | 0.0001 |
+| scale_0.1 | best_dip | 0.1244 | 0.1733 | 18.45 | 0.0282 | 0.0002 |
+| scale_0.1 | oracle | 0.0907 | 0.1298 | 13.49 | 0.0377 | 0.0004 |
+| scale_0.2 | sample | 0.1307 | 0.1819 | 19.21 | 0.1147 | 0.0055 |
+| scale_0.2 | mean4 | 0.1116 | 0.1536 | 16.68 | 0.0687 | 0.0012 |
+| scale_0.2 | best_dip | 0.1242 | 0.1760 | 18.33 | 0.0866 | 0.0023 |
+| scale_0.2 | oracle | 0.0987 | 0.1385 | 14.44 | 0.1122 | 0.0034 |
+| scale_0.5 | sample | 0.1561 | 0.2106 | 22.30 | 0.2439 | 0.0149 |
+| scale_0.5 | mean4 | 0.1279 | 0.1737 | 18.62 | 0.1508 | 0.0041 |
+| scale_0.5 | best_dip | 0.1506 | 0.2032 | 21.50 | 0.1950 | 0.0115 |
+| scale_0.5 | oracle | 0.1305 | 0.1792 | 18.66 | 0.2364 | 0.0152 |
+| scale_1 | sample | 0.2016 | 0.2631 | 26.42 | 0.3282 | 0.0352 |
+| scale_1 | mean4 | 0.1517 | 0.2015 | 20.73 | 0.2572 | 0.0119 |
+| scale_1 | best_dip | 0.1954 | 0.2541 | 25.85 | 0.2838 | 0.0307 |
+| scale_1 | oracle | 0.1807 | 0.2366 | 23.81 | 0.3239 | 0.0308 |
+
+GT dip 0.0460, mono 0.0005 (reference: what a perfect RGT scores)
+scale_0: dip score vs MAE pearson 0.138, within section 0.114
+scale_0.05: dip score vs MAE pearson 0.169, within section 0.234
+scale_0.1: dip score vs MAE pearson 0.168, within section 0.113
+scale_0.2: dip score vs MAE pearson 0.066, within section 0.088
+scale_0.5: dip score vs MAE pearson 0.099, within section 0.089
+scale_1: dip score vs MAE pearson 0.118, within section 0.151
+
+wrote runs/ldm_clip/guide_sweep/compare.csv
