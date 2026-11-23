@@ -1,0 +1,55 @@
+/usr/local/lib/python3.12/dist-packages/timm/models/layers/__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+ldm=runs/ldm_clip/ckpt_eval.pt (step 157500) steps=50 eta=0.0 cfg_guidance=1.0 N=32 dip_guidance=off models=['Modelo7', 'Modelo2']
+Modelo7 (val): 64 sections done
+Modelo2 (test): 96 sections done
+
+== Modelo7 (val)   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1425   0.1986    21.84  0.0487  0.0010
+   mean32         0.1086   0.1468    16.89  0.0608  0.0000
+   best_dip       0.1549   0.2153    22.14  0.0296  0.0006
+   oracle         0.0537   0.0971     8.44  0.0481  0.0001
+   b1             0.1180   0.1618    17.97  0.0666  0.0002
+   spread=0.1217  std_err_corr=0.324
+   dip score vs MAE: pearson=0.115  within-section=0.080
+
+== Modelo2 (test)   sections=96
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0574  0.0270
+   ae             0.0017   0.0033     0.30  0.0559  0.0268
+   sample         0.1327   0.1835    20.17  0.0520  0.0017
+   mean32         0.1099   0.1553    16.79  0.0620  0.0000
+   best_dip       0.1580   0.2179    22.51  0.0284  0.0004
+   oracle         0.0619   0.1039     9.74  0.0601  0.0032
+   b1             0.1229   0.1700    18.12  0.0684  0.0001
+   spread=0.1104  std_err_corr=0.247
+   dip score vs MAE: pearson=0.419  within-section=-0.017
+
+== ALL VAL VOLUMES   sections=64
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0460  0.0005
+   ae             0.0013   0.0033     0.22  0.0441  0.0002
+   sample         0.1425   0.1986    21.84  0.0487  0.0010
+   mean32         0.1086   0.1468    16.89  0.0608  0.0000
+   best_dip       0.1549   0.2153    22.14  0.0296  0.0006
+   oracle         0.0537   0.0971     8.44  0.0481  0.0001
+   b1             0.1180   0.1618    17.97  0.0666  0.0002
+   spread=0.1217  std_err_corr=0.324
+   dip score vs MAE: pearson=0.115  within-section=0.080
+
+== ALL TEST VOLUMES   sections=96
+                     MAE     RMSE   HDE px     dip    mono
+   gt                                       0.0574  0.0270
+   ae             0.0017   0.0033     0.30  0.0559  0.0268
+   sample         0.1327   0.1835    20.17  0.0520  0.0017
+   mean32         0.1099   0.1553    16.79  0.0620  0.0000
+   best_dip       0.1580   0.2179    22.51  0.0284  0.0004
+   oracle         0.0619   0.1039     9.74  0.0601  0.0032
+   b1             0.1229   0.1700    18.12  0.0684  0.0001
+   spread=0.1104  std_err_corr=0.247
+   dip score vs MAE: pearson=0.419  within-section=-0.017
+
+wrote runs/ldm_clip/eval_n32/report.json, sections.csv (160 sections) and figures in runs/ldm_clip/eval_n32
